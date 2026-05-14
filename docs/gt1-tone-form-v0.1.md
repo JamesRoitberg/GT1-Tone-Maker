@@ -1,137 +1,162 @@
 # Contrato GT1_TONE_FORM_V0_1
 
-Este documento descreve o contrato do formulário `GT1_TONE_FORM_V0_1`, usado pelo GT-1 Tone Maker para receber parâmetros de timbre gerados por IA.
+Este documento descreve o contrato do formulario `GT1_TONE_FORM_V0_1`, usado pelo GT-1 Tone Maker para receber parametros de timbre gerados por IA.
 
 ## Finalidade
 
-O formulário serve como uma ponte simples entre uma descrição musical feita por uma IA e os parâmetros que serão usados para gerar um arquivo `.tsl` importável no BOSS Tone Studio para a pedaleira BOSS GT-1.
+O formulario serve como uma ponte simples entre uma referencia musical digitada pelo usuario e os parametros que serao usados para gerar um arquivo `.tsl` importavel no BOSS Tone Studio para a pedaleira BOSS GT-1.
 
-Ele não representa uma promessa de cópia perfeita de timbres oficiais. O objetivo é gerar uma base musical coerente para ajuste fino no BOSS Tone Studio ou na própria pedaleira.
+Ele nao representa uma promessa de copia perfeita de timbres oficiais. O objetivo e gerar uma base musical coerente para ajuste fino no BOSS Tone Studio ou na propria pedaleira.
 
-## Visão Geral do Fluxo
+## Fluxo Planejado
 
-1. O usuário pede um timbre para uma IA.
-2. A IA preenche um formulário `GT1_TONE_FORM_V0_1`.
-3. O usuário salva esse formulário como `.txt` dentro da pasta `input/`.
-4. O GT-1 Tone Maker lê o formulário.
-5. A ferramenta valida os campos.
-6. A ferramenta aplica os valores em um `.tsl` base.
-7. O arquivo final é salvo na pasta `output/`.
+1. O usuario informa uma referencia no GT-1 Tone Maker, como artista, banda, musica, album, guitarrista ou estilo.
+2. O sistema injeta essa referencia no prompt interno usando a variavel `{{USER_REFERENCE}}`.
+3. A IA responde diretamente com um formulario `GT1_TONE_FORM_V0_1`.
+4. O formulario e salvo em `input/`.
+5. O parser le o bloco do formulario e converte para um objeto JavaScript simples.
+6. O normalizador aplica defaults seguros e conversoes tolerantes.
+7. O validador confere campos obrigatorios, enums, ranges e formatos.
+8. O JSON interno normalizado e salvo em `internal/`.
+9. O gerador usa um `.tsl` base oficial e cria o patch final em `output/`.
 
-## Regras Gerais de Parsing
+## Decisao Central
 
-- O formulário começa com a linha `GT1_TONE_FORM_V0_1`.
-- O formulário termina com a linha `END_GT1_TONE_FORM`.
-- O parser deve ler somente o conteúdo entre `GT1_TONE_FORM_V0_1` e `END_GT1_TONE_FORM`.
-- Texto antes de `GT1_TONE_FORM_V0_1` deve ser ignorado pelo parser.
-- Texto depois de `END_GT1_TONE_FORM` deve ser ignorado pelo parser.
-- Explicações adicionais podem existir depois de `END_GT1_TONE_FORM`, mas não serão usadas pelo programa.
-- Dentro do formulário, cada linha de campo deve usar o formato `CAMPO=VALOR`.
-- Linhas vazias dentro do bloco do formulário devem ser ignoradas.
-- O parser pode remover espaços no começo e no fim de cada linha.
-- O parser pode remover espaços no começo e no fim de `CAMPO` e `VALOR`.
-- O valor pode conter espaços.
+A IA nao gera JSON.
+
+A IA gera apenas formularios `GT1_TONE_FORM_V0_1`.
+
+JSON sera apenas formato interno da ferramenta.
+
+## Responsabilidades
+
+### Parser
+
+O parser deve:
+
+- Localizar o bloco entre `GT1_TONE_FORM_V0_1` e `END_GT1_TONE_FORM`.
+- Ignorar texto antes e depois do bloco.
+- Ignorar linhas vazias dentro do bloco.
+- Aceitar somente linhas no formato `CAMPO=VALOR`.
+- Remover espacos no comeco e no fim de cada linha.
+- Remover espacos no comeco e no fim de `CAMPO` e `VALOR`.
+- Retornar um objeto JavaScript simples.
+- Nao depender de JSON gerado pela IA.
+
+### Validador
+
+O validador deve:
+
+- Rejeitar campos desconhecidos.
+- Rejeitar campos duplicados.
+- Exigir todos os campos obrigatorios.
+- Validar enums.
+- Validar ranges numericos.
+- Validar formatos esperados.
+- Gerar mensagens amigaveis e orientadas a solucao.
+
+### Normalizador
+
+O normalizador deve:
+
+- Aplicar defaults seguros quando fizer sentido.
+- Corrigir formatos simples quando possivel.
+- Converter campos numericos com seguranca.
+- Evitar falhas desnecessarias causadas por pequenas imperfeicoes da IA.
+- Nao aceitar valores que possam quebrar o fluxo ou gerar patch inconsistente.
+
+## Regras Gerais do Formulario
+
+- O formulario comeca com a linha `GT1_TONE_FORM_V0_1`.
+- O formulario termina com a linha `END_GT1_TONE_FORM`.
+- Dentro do formulario, cada linha de campo deve usar o formato `CAMPO=VALOR`.
+- Explicacoes adicionais podem existir depois de `END_GT1_TONE_FORM`, mas nao serao usadas pelo programa.
+- O valor pode conter espacos.
 - O nome do campo deve bater com um campo documentado neste contrato.
-- Todos os campos documentados são obrigatórios.
-- Campos não reconhecidos dentro do formulário devem gerar erro de validação.
-- Campos duplicados dentro do formulário devem gerar erro de validação.
-- Campos numéricos devem ser parseáveis como número.
-- Campos de liga/desliga devem usar `YES` ou `NO`, exceto `PREAMP_BRIGHT`, que usa `ON` ou `OFF`.
+- Todos os campos documentados sao obrigatorios no MVP.
+- Nao ha suporte inicial para reordenar a cadeia de efeitos.
+- Nao ha suporte inicial para campos extras.
+- Nao ha suporte inicial para multiplos patches no mesmo arquivo.
+- Nao ha suporte inicial para multiplos blocos `GT1_TONE_FORM_V0_1` no mesmo arquivo.
 
-## Regras de Validação do MVP
+## Campos Obrigatorios
 
-Para o MVP, o contrato deve ser rígido.
-
-- O valor de `CHAIN` deve ser exatamente `COMP,OD_DS,PREAMP,NS,EQ,DELAY,REVERB`.
-- Não há suporte inicial para reordenar a cadeia de efeitos.
-- Não há suporte inicial para campos extras.
-- Não há suporte inicial para múltiplos patches no mesmo arquivo.
-- Não há suporte inicial para múltiplos blocos `GT1_TONE_FORM_V0_1` no mesmo arquivo.
-- Caso existam múltiplos blocos, o validador deve tratar como erro.
-- Campos textuais não devem ficar vazios.
-- O campo `SONG` deve usar `GENERAL` quando não houver música específica.
-- O campo `GUITARIST` pode usar `UNKNOWN` quando não houver informação confiável.
-- O campo `BAND` pode usar `UNKNOWN` quando não houver banda ou artista definido.
-- O campo `NOTES` deve conter uma frase curta de intenção do timbre.
-
-## Campos Obrigatórios
-
-### Identificação
+### Identificacao
 
 - `PATCH_NAME`: nome curto do patch.
-- `REFERENCE`: resumo do pedido original do usuário.
-- `GUITARIST`: guitarrista principal ou `UNKNOWN` quando não houver informação confiável.
-- `BAND`: banda ou artista, ou `UNKNOWN` quando não houver informação.
-- `SONG`: música específica ou `GENERAL`.
-- `ALBUM_OR_ERA`: álbum, fase, época ou estilo.
-- `STYLE`: descrição curta do estilo musical.
-- `TONE_TYPE`: intenção principal do timbre.
-- `CONFIDENCE`: confiança da aproximação, de `0.00` a `1.00`.
+- `REFERENCE`: resumo da referencia digitada pelo usuario.
+- `GUITARIST`: guitarrista principal ou `UNKNOWN`.
+- `BAND`: banda ou artista, ou `UNKNOWN`.
+- `SONG`: musica especifica ou `GENERAL`.
+- `ALBUM_OR_ERA`: album, fase, epoca ou estilo.
+- `STYLE`: descricao curta do estilo musical.
+- `TONE_TYPE`: intencao principal do timbre.
+- `CONFIDENCE`: confianca da aproximacao, de `0.00` a `1.00`.
 - `CHAIN`: cadeia de efeitos usada pelo MVP.
 
 ### Compressor
 
-- `COMP_ON`: liga ou desliga o compressor.
-- `COMP_TYPE`: tipo de compressor.
-- `COMP_SUSTAIN`: sustain do compressor.
-- `COMP_ATTACK`: ataque do compressor.
-- `COMP_TONE`: tonalidade do compressor.
-- `COMP_LEVEL`: nível do compressor.
+- `COMP_ON`
+- `COMP_TYPE`
+- `COMP_SUSTAIN`
+- `COMP_ATTACK`
+- `COMP_TONE`
+- `COMP_LEVEL`
 
 ### Overdrive/Distortion
 
-- `OD_DS_ON`: liga ou desliga o bloco de overdrive/distortion.
-- `OD_DS_TYPE`: tipo de overdrive/distortion.
-- `OD_DS_DRIVE`: quantidade de ganho/distorção.
-- `OD_DS_TONE`: tonalidade do drive.
-- `OD_DS_BOTTOM`: reforço ou corte de graves do drive.
-- `OD_DS_EFFECT_LEVEL`: nível do efeito.
-- `OD_DS_DIRECT_LEVEL`: nível do sinal direto.
+- `OD_DS_ON`
+- `OD_DS_TYPE`
+- `OD_DS_DRIVE`
+- `OD_DS_TONE`
+- `OD_DS_BOTTOM`
+- `OD_DS_EFFECT_LEVEL`
+- `OD_DS_DIRECT_LEVEL`
 
 ### Preamp
 
-- `PREAMP_ON`: liga ou desliga o preamp.
-- `PREAMP_TYPE`: tipo de preamp.
-- `PREAMP_GAIN`: ganho do preamp.
-- `PREAMP_LEVEL`: nível do preamp.
-- `PREAMP_BASS`: graves do preamp.
-- `PREAMP_MIDDLE`: médios do preamp.
-- `PREAMP_TREBLE`: agudos do preamp.
-- `PREAMP_PRESENCE`: presença do preamp.
-- `PREAMP_BRIGHT`: chave bright do preamp.
+- `PREAMP_ON`
+- `PREAMP_TYPE`
+- `PREAMP_GAIN`
+- `PREAMP_LEVEL`
+- `PREAMP_BASS`
+- `PREAMP_MIDDLE`
+- `PREAMP_TREBLE`
+- `PREAMP_PRESENCE`
+- `PREAMP_BRIGHT`
 
 ### Noise Suppressor
 
-- `NS_ON`: liga ou desliga o noise suppressor.
-- `NS_THRESHOLD`: limiar de atuação.
-- `NS_RELEASE`: tempo de liberação.
+- `NS_ON`
+- `NS_THRESHOLD`
+- `NS_RELEASE`
 
 ### EQ
 
-- `EQ_ON`: liga ou desliga o EQ.
-- `EQ_LOW`: ajuste de graves.
-- `EQ_MID`: ajuste de médios.
-- `EQ_HIGH`: ajuste de agudos.
+- `EQ_ON`
+- `EQ_LOW`
+- `EQ_MID`
+- `EQ_HIGH`
 
 ### Delay
 
-- `DELAY_ON`: liga ou desliga o delay.
-- `DELAY_TYPE`: tipo de delay.
-- `DELAY_TIME`: tempo de delay.
-- `DELAY_FEEDBACK`: feedback do delay.
-- `DELAY_LEVEL`: nível do delay.
+- `DELAY_ON`
+- `DELAY_TYPE`
+- `DELAY_TIME`
+- `DELAY_FEEDBACK`
+- `DELAY_LEVEL`
 
 ### Reverb
 
-- `REVERB_ON`: liga ou desliga o reverb.
-- `REVERB_TYPE`: tipo de reverb.
-- `REVERB_TIME`: tempo de reverb.
-- `REVERB_LEVEL`: nível do reverb.
+- `REVERB_ON`
+- `REVERB_TYPE`
+- `REVERB_TIME`
+- `REVERB_LEVEL`
 
 ### Master
 
-- `MASTER_LEVEL`: volume final sugerido para o patch.
-- `NOTES`: frase curta explicando a intenção do timbre.
+- `MASTER_LEVEL`
+- `NOTES`
 
 ## Valores Permitidos
 
@@ -159,9 +184,144 @@ No MVP, `CHAIN` deve ser exatamente:
 
 ```text
 COMP,OD_DS,PREAMP,NS,EQ,DELAY,REVERB
+```
 
-### Template Vazio 
+### TONE_TYPE
 
+```text
+base
+lead
+crunch
+clean
+metal
+rock
+fuzz
+solo
+outro
+```
+
+### OD_DS_TYPE
+
+```text
+MID BOOST
+CLEAN BST
+TREBLE BST
+CRUNCH
+NATURAL OD
+WARM OD
+FAT DS
+LEAD DS
+METAL DS
+OCT FUZZ
+A-DIST
+BLUES OD
+OD-1
+T-SCREAM
+TURBO OD
+DISTORTION
+RAT
+GUV DS
+DST+
+METAL ZONE
+60S FUZZ
+MUFF FUZZ
+```
+
+### PREAMP_TYPE
+
+```text
+NATURAL CLEAN
+FULL RANGE
+COMBO CRUNCH
+STACK CRUNCH
+HiGAIN STACK
+POWER DRIVE
+EXTREME LEAD
+CORE METAL
+JC-120
+TWEED
+DELUXE CRUNCH
+VO DRIVE
+VO LEAD
+MATCH DRIVE
+BG LEAD
+BG DRIVE
+MS1959 I
+MS1959 I+II
+R-FIER VINTAGE
+R-FIER MODERN
+T-AMP LEAD
+SLDN
+5150 DRIVE
+METAL LEAD
+```
+
+### COMP_TYPE
+
+```text
+BOSS
+HI-BAND
+LIGHT
+D-COMP
+ORANGE
+FAT
+MILD
+STEREO
+```
+
+### REVERB_TYPE
+
+```text
+AMBIENCE
+ROOM
+HALL 1
+HALL 2
+PLATE
+```
+
+### DELAY_TYPE
+
+```text
+STANDARD
+ANALOG
+TAPE
+MODULATE
+REVERSE
+```
+
+## Ranges Numericos
+
+- `CONFIDENCE`: 0 a 1.
+- `COMP_SUSTAIN`: 0 a 100.
+- `COMP_ATTACK`: 0 a 100.
+- `COMP_TONE`: -50 a 50.
+- `COMP_LEVEL`: 0 a 100.
+- `OD_DS_DRIVE`: 0 a 120.
+- `OD_DS_TONE`: -50 a 50.
+- `OD_DS_BOTTOM`: -50 a 50.
+- `OD_DS_EFFECT_LEVEL`: 0 a 100.
+- `OD_DS_DIRECT_LEVEL`: 0 a 100.
+- `PREAMP_GAIN`: 0 a 120.
+- `PREAMP_LEVEL`: 0 a 100.
+- `PREAMP_BASS`: 0 a 100.
+- `PREAMP_MIDDLE`: 0 a 100.
+- `PREAMP_TREBLE`: 0 a 100.
+- `PREAMP_PRESENCE`: 0 a 100.
+- `NS_THRESHOLD`: 0 a 100.
+- `NS_RELEASE`: 0 a 100.
+- `EQ_LOW`: -20 a 20.
+- `EQ_MID`: -20 a 20.
+- `EQ_HIGH`: -20 a 20.
+- `DELAY_TIME`: 1 a 2000.
+- `DELAY_FEEDBACK`: 0 a 100.
+- `DELAY_LEVEL`: 0 a 100.
+- `REVERB_TIME`: 0.1 a 10.0.
+- `REVERB_LEVEL`: 0 a 100.
+- `MASTER_LEVEL`: 0 a 100.
+
+## Template Vazio
+
+```text
 GT1_TONE_FORM_V0_1
 
 PATCH_NAME=
@@ -226,10 +386,11 @@ MASTER_LEVEL=
 NOTES=
 
 END_GT1_TONE_FORM
+```
 
+## Exemplo Completo
 
-### Ex de Template Completo
-
+```text
 GT1_TONE_FORM_V0_1
 
 PATCH_NAME=FNM Real Thing
@@ -291,6 +452,13 @@ REVERB_LEVEL=15
 
 MASTER_LEVEL=85
 
-NOTES=Timbre inspirado no som cortante e pesado de Jim Martin, com ataque forte e ambiência discreta.
+NOTES=Timbre inspirado no som cortante e pesado de Jim Martin, com ataque forte e ambiencia discreta.
 
 END_GT1_TONE_FORM
+```
+
+## Estado de Implementacao
+
+Ja existem parser, normalizador, validador e escrita de JSON interno para este contrato.
+
+A geracao de `.tsl` ainda esta pendente.

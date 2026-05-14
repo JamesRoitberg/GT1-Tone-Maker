@@ -1,48 +1,93 @@
 # GT-1 Tone Maker
 
-GT-1 Tone Maker é uma ferramenta em Node.js para transformar um formulario de timbre gerado por IA em um arquivo de patch/liveset importavel no BOSS Tone Studio para a pedaleira BOSS GT-1.
+GT-1 Tone Maker e uma ferramenta em Node.js para transformar uma referencia musical em um patch/liveset importavel no BOSS Tone Studio para a pedaleira BOSS GT-1.
 
-O projeto resolve um problema simples: muitas pessoas conseguem descrever o timbre que querem, mas nao sabem traduzir essa ideia para parametros da GT-1 ou para um arquivo `.tsl`. A ferramenta pretende fazer essa ponte de forma guiada, usando um formulario de texto preenchido por IA como ponto de partida.
+O projeto resolve um problema simples: muitas pessoas conseguem descrever o timbre que querem, mas nao sabem traduzir essa ideia para parametros da GT-1 ou para um arquivo `.tsl`. A ferramenta pretende fazer essa ponte de forma guiada, usando IA para preencher um formulario de texto controlado.
 
-## Prompt Para Usar nas IAs
+O resultado gerado deve ser uma base musical util para ajuste fino, nao uma copia oficial ou perfeita de timbres existentes.
 
-O prompt que o usuario deve colar em outras IAs fica em um lugar de facil acesso:
+## Fluxo Planejado
+
+1. O usuario abre o app.
+2. O usuario escolhe "Criar distorcao/efeito".
+3. O usuario digita artista, banda, musica, album ou estilo.
+4. O sistema injeta essa referencia no prompt interno em `{{USER_REFERENCE}}`.
+5. A IA responde diretamente com um formulario `GT1_TONE_FORM_V0_1`.
+6. O formulario e salvo em `input/`.
+7. O parser le o formulario e gera um objeto interno.
+8. O normalizador aplica defaults e conversoes seguras.
+9. O validador confere campos obrigatorios, enums e ranges.
+10. O JSON interno normalizado e salvo em `internal/`.
+11. O gerador cria o arquivo `.tsl`.
+12. O patch final e salvo em `output/`.
+
+## Decisao Central
+
+A IA nao deve gerar JSON.
+
+A IA deve gerar apenas formularios `GT1_TONE_FORM_V0_1`.
+
+JSON sera usado apenas como formato interno da ferramenta, depois que o formulario for lido, normalizado e validado.
+
+Essa separacao existe para deixar o projeto mais robusto contra respostas imperfeitas da IA e mais simples para usuarios leigos.
+
+## Prompt Interno
+
+O prompt usado pelo sistema fica em:
 
 `prompts/ai-tone-form-prompt-v0.1.md`
 
-Esse arquivo contem as instrucoes para a IA perguntar qual timbre o usuario deseja e devolver o formulario `GT1_TONE_FORM_V0_1` no formato esperado pelo GT-1 Tone Maker.
+Esse arquivo funciona como um template interno. O app substitui `{{USER_REFERENCE}}` pela referencia digitada pelo usuario antes de enviar o prompt para a IA.
 
-## Fluxo Basico
+O modo manual com copiar e colar formulario deve continuar existindo como fallback.
 
-1. O usuario cola um prompt em qualquer IA.
-2. A IA pergunta qual timbre ele quer criar.
-3. A IA devolve um formulario chamado `GT1_TONE_FORM_V0_1`.
-4. O usuario salva esse formulario como arquivo `.txt` dentro da pasta `input/`.
-5. O GT-1 Tone Maker lista os formularios encontrados.
-6. O usuario escolhe um formulario em uma interface simples.
-7. A ferramenta converte o formulario em um arquivo `.tsl`.
-8. O arquivo final e salvo na pasta `output/`.
-9. O usuario importa o `.tsl` no BOSS Tone Studio.
+## Estrutura Atual
 
-## Estrutura Inicial
+- `input/`: formularios `.form.txt` gerados pela IA ou colados pelo usuario.
+- `internal/`: JSONs internos normalizados gerados pela ferramenta.
+- `output/`: arquivos `.tsl` gerados.
+- `base/`: `.tsl` base oficial exportado pelo BOSS Tone Studio.
+- `prompts/`: prompts usados pelo sistema.
+- `docs/`: contratos, arquitetura e backlog.
+- `src/form/`: contrato em codigo, parser, normalizador e validador iniciais do formulario.
+- `src/internal/`: escrita do JSON interno normalizado.
+- `tests/fixtures/`: fixtures usadas nos testes manuais.
+- `scripts/`: scripts auxiliares de validacao manual.
 
-- `input/`: onde o usuário coloca os formulários `.txt` gerados pela IA.
-- `output/`: onde a ferramenta salva os arquivos `.tsl` gerados.
-- `base/`: onde fica o `.tsl` base exportado pelo BOSS Tone Studio.
-- `prompts/`: onde ficam os prompts para usar em outras IAs.
-- `docs/`: documentação técnica do projeto.
+## Estado Atual
 
-## Objetivo do MVP
+Ja existem:
 
-O objetivo inicial do MVP e gerar um arquivo `.tsl` a partir de:
+- contrato documental inicial do formulario;
+- prompt interno com `{{USER_REFERENCE}}`;
+- overview de arquitetura;
+- parser inicial do bloco `GT1_TONE_FORM_V0_1`;
+- normalizador inicial com defaults seguros e conversoes tolerantes;
+- validador inicial de campos obrigatorios, enums e ranges;
+- escrita de JSON interno normalizado em `internal/`;
+- fixtures e scripts manuais de teste do formulario e do JSON interno.
 
-- um formulario de timbre criado por IA;
-- um arquivo `.tsl` base exportado oficialmente pelo BOSS Tone Studio.
+Ainda faltam:
 
-A ideia e produzir uma base musical util para ajuste fino na propria pedaleira ou no BOSS Tone Studio. O resultado nao precisa copiar um timbre oficial com perfeicao.
+- pesquisa e estrategia de manipulacao segura de `.tsl`;
+- gerador `.tsl`;
+- fluxo principal de usuario.
 
-## Simplicidade Para o Usuario
+## Teste Manual Disponivel
 
-O usuário final não deve precisar entender Node.js, terminal, dependências, comandos ou estrutura interna do projeto.
+O projeto ainda nao tem `package.json` nem dependencias externas.
 
-No futuro, a ferramenta podera ser empacotada como um ZIP portatil, com tudo pronto para uso.
+Os testes manuais atuais podem ser executados com Node.js:
+
+```sh
+node scripts/test-parser.js
+node scripts/test-internal-json.js
+```
+
+## Documentacao Principal
+
+- `docs/backlog.md`: controle de progresso.
+- `docs/architecture-overview-v0.1.md`: visao geral da arquitetura.
+- `docs/gt1-tone-form-v0.1.md`: contrato do formulario.
+
+Antes de iniciar novas tarefas, consulte `docs/backlog.md`.

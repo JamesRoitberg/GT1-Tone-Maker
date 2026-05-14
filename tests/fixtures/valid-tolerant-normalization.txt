@@ -1,0 +1,68 @@
+Texto antes do formulario deve continuar sendo ignorado.
+
+GT1_TONE_FORM_V0_1
+
+patch_name=  FNM Normalized
+reference= Faith No More The Real Thing
+guitarist= Jim Martin
+band= Faith No More
+song= The Real Thing
+album_or_era= The Real Thing (1989)
+style= Funk Metal / Alternative Metal
+tone_type=Metal
+confidence=85%
+
+chain= comp, od_ds, preamp, ns, eq, delay, reverb
+
+comp_on=sim
+comp_type=boss
+comp_sustain=25
+comp_attack=50
+comp_tone=5
+comp_level=50
+
+od_ds_on=yes
+od_ds_type=guv ds
+od_ds_drive=45
+od_ds_tone=10
+od_ds_bottom=5
+od_ds_effect_level=40
+od_ds_direct_level=0
+
+preamp_on=ligado
+preamp_type=higain stack
+preamp_gain=85
+preamp_level=55
+preamp_bass=55
+preamp_middle=40
+preamp_treble=65
+preamp_presence=70
+preamp_bright=on
+
+ns_on=YES
+ns_threshold=40
+ns_release=30
+
+eq_on=YES
+eq_low=3
+eq_mid=-2
+eq_high=6
+
+delay_on=off
+delay_type=standard
+delay_time=380 ms
+delay_feedback=20
+delay_level=25
+
+reverb_on=YES
+reverb_type=room
+reverb_time=1,2
+reverb_level=15
+
+master_level=85
+
+notes=  Timbre inspirado no som cortante e pesado de Jim Martin, com ataque forte e ambiencia discreta.
+
+END_GT1_TONE_FORM
+
+Texto depois do formulario tambem deve continuar sendo ignorado.

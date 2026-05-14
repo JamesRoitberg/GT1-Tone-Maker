@@ -1,12 +1,28 @@
 const fs = require("fs");
 const path = require("path");
 
-const { parseToneForm, validateToneForm } = require("../src");
+const { normalizeToneForm, parseToneForm, validateToneForm } = require("../src");
 
 const fixturesDir = path.join(__dirname, "..", "tests", "fixtures");
 
 const cases = [
   { file: "valid-fnm-real-thing.txt", shouldPass: true },
+  {
+    file: "valid-tolerant-normalization.txt",
+    shouldPass: true,
+    expected: {
+      CHAIN: "COMP,OD_DS,PREAMP,NS,EQ,DELAY,REVERB",
+      COMP_ON: "YES",
+      CONFIDENCE: 0.85,
+      DELAY_ON: "NO",
+      DELAY_TIME: 380,
+      OD_DS_TYPE: "GUV DS",
+      PREAMP_BRIGHT: "ON",
+      PREAMP_TYPE: "HiGAIN STACK",
+      REVERB_TIME: 1.2,
+      TONE_TYPE: "metal",
+    },
+  },
   { file: "invalid-missing-field.txt", shouldPass: false },
   { file: "invalid-unknown-field.txt", shouldPass: false },
   { file: "invalid-duplicate-field.txt", shouldPass: false },
@@ -16,15 +32,17 @@ const cases = [
 
 let failures = 0;
 
-cases.forEach(({ file, shouldPass }) => {
+cases.forEach(({ file, shouldPass, expected }) => {
   const filePath = path.join(fixturesDir, file);
   const text = fs.readFileSync(filePath, "utf8");
 
   try {
     const parsed = parseToneForm(text);
-    validateToneForm(parsed);
+    const normalized = normalizeToneForm(parsed);
+    const validated = validateToneForm(normalized);
 
     if (shouldPass) {
+      assertExpectedValues(file, validated, expected);
       console.log(`PASS ${file}`);
       return;
     }
@@ -49,4 +67,14 @@ if (failures > 0) {
   process.exit(1);
 }
 
-console.log("\nTodos os testes manuais do parser passaram.");
+console.log("\nTodos os testes manuais do formulario passaram.");
+
+function assertExpectedValues(file, validated, expected = {}) {
+  Object.entries(expected).forEach(([field, expectedValue]) => {
+    if (validated[field] !== expectedValue) {
+      throw new Error(
+        `${file}: esperado ${field}=${expectedValue}, recebido ${validated[field]}.`
+      );
+    }
+  });
+}
